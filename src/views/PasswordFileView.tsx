@@ -130,7 +130,7 @@ function PasswordFileView() {
 
                 </div>
             </div>
-            <div className="flex flex-col gap-3  items-stretch p-6  h-full w-full">
+            <div className="flex flex-col gap-3  overflow-y-auto items-stretch p-6 my-3  h-full w-full">
                 {passwords.map(function (password) {
                     return (
                         <div key={password.id}

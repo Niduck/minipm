@@ -58,7 +58,6 @@ export default function Encryption() {
                     true,
                     ["encrypt", "decrypt"]
                 );
-                console.log('-> derive salt: ',password, _salt)
                 return {
                     salt: Base64Converter.toBase64(_salt),
                     key: derivedKey
@@ -81,9 +80,7 @@ export default function Encryption() {
             },
             decrypt: async function (cryptoKey: CryptoKey, data: Uint8Array) {
                 const iv = new Uint8Array(data.slice(0, 16));
-                console.log(iv)
                 const content = new Uint8Array(data.slice(16, data.length));
-                console.log(content)
                 try{
                     return await crypto.subtle.decrypt(
                         {

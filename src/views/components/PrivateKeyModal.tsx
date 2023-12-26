@@ -12,11 +12,12 @@ function PrivateKeyModal({isOpen, onClose}: { isOpen: boolean, onClose: () => vo
 
     async function handleSave() {
         if (!formRef.current) {
+            console.error("formRef not found")
             return false;
         }
         //Get data from the formRef
         const formData = new FormData(formRef.current);
-        if(!formData.get('privateKey') || !formData.get('filename')){
+        if(!formData.get('privateKey')){
             return;
         }
         const privateKey = formData.get('privateKey') as string

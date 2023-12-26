@@ -21,6 +21,9 @@ function PasswordFileModal({isOpen, onClose}:{isOpen:boolean, onClose: (data?:st
         }
         if (setPrivateKey) {
             const formData = new FormData(formRef.current);
+            if(!formData.get('privateKey') || !formData.get('filename')){
+                return;
+            }
             const encryption = Encryption();
             const cryptoKey = await encryption.key.deriveKey(formData.get('secretkey') as string);
             setPrivateKey(cryptoKey as PrivateKey)
