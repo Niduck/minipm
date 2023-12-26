@@ -5,7 +5,7 @@ import './index.scss'
 import Icons from "./components/Icons.tsx";
 import {createBrowserRouter, RouterProvider} from "react-router-dom";
 import routes from './routing/routes.tsx'
-const router = createBrowserRouter(routes)
+const router = createBrowserRouter(routes, {basename: "/minipm"})
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App>

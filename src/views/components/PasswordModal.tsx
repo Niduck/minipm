@@ -94,31 +94,33 @@ function PasswordModal({isOpen, onClose, defaultValue}: { isOpen: boolean, onClo
     return (
         <>
             <Modal size={"4xl"} show={isOpen} onClose={_onClose}>
-                <Modal.Header>Mot passe</Modal.Header>
+                <Modal.Header>{
+                    defaultValue ? "Edit password" : "New password"
+                }</Modal.Header>
                 <Modal.Body>
                     {typeof value?.secret !== "string" && (
                         <form ref={formRef} autoComplete={"off"} className="flex w-full items-stretch gap-12">
                             <div className={"w-1/2 flex justify-evenly flex-col gap-3"}>
                                 <div>
                                     <div className="mb-2 block">
-                                        <Label htmlFor="name" value="Nom"/>
+                                        <Label htmlFor="name" value="Name"/>
                                     </div>
                                     <TextInput autoComplete={"off"} name="name" defaultValue={value?.name} id="name"
                                                type="text"
-                                               placeholder="mon_super_projet" required/>
+                                               placeholder="my_secret_password" required/>
                                 </div>
                                 <div>
                                     <div className="mb-2 block">
-                                        <Label htmlFor="username" value="Nom d'utilisateur"/>
+                                        <Label htmlFor="username" value="Username"/>
                                     </div>
                                     <TextInput autoComplete={"off"} name="secret.username"
                                                defaultValue={value?.secret.username}
                                                id="username" type="text"
-                                               placeholder="mon_super_projet" required/>
+                                               required/>
                                 </div>
                                 <div>
                                     <div className="mb-2 block">
-                                        <Label htmlFor="password" value="Mot de passe"/>
+                                        <Label htmlFor="password" value="Password"/>
                                     </div>
                                     <div className={"flex gap-1.5"}>
 
@@ -152,7 +154,7 @@ function PasswordModal({isOpen, onClose, defaultValue}: { isOpen: boolean, onClo
                             </div>
                             <div className={"w-1/2"}>
                                 <div className="mb-2 block">
-                                    <Label htmlFor="password" value="Note sécurisée"/>
+                                    <Label htmlFor="password" value="Note"/>
                                 </div>
                                 <Textarea className={"h-3/4"} autoComplete={"off"} defaultValue={value?.secret.note}
                                           name="secret.note" id="note"
@@ -163,7 +165,7 @@ function PasswordModal({isOpen, onClose, defaultValue}: { isOpen: boolean, onClo
                 </Modal.Body>
                 <Modal.Footer>
                     <div className="mx-auto">
-                        <Button color="purple" disabled={isLoading} onClick={handleSave}>Valider</Button>
+                        <Button color="purple" disabled={isLoading} onClick={handleSave}>Continue</Button>
                     </div>
                 </Modal.Footer>
             </Modal>

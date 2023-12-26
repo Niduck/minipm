@@ -16,6 +16,9 @@ function PrivateKeyModal({isOpen, onClose}: { isOpen: boolean, onClose: () => vo
         }
         //Get data from the formRef
         const formData = new FormData(formRef.current);
+        if(!formData.get('privateKey') || !formData.get('filename')){
+            return;
+        }
         const privateKey = formData.get('privateKey') as string
         const encryption = Encryption();
         const storage = localStorage.getItem("minipm_lock");
@@ -37,12 +40,12 @@ function PrivateKeyModal({isOpen, onClose}: { isOpen: boolean, onClose: () => vo
 
     return (
         <Modal show={isOpen} onClose={_onClose}>
-            <Modal.Header>Créer un mot passe</Modal.Header>
+            <Modal.Header>Unlock your file</Modal.Header>
             <Modal.Body>
                 <form ref={formRef} autoComplete={"off"} className="flex w-full flex-col gap-4">
                     <div>
                         <div className="mb-2 block">
-                            <Label htmlFor="password" value="Clé de securité"/>
+                            <Label htmlFor="password" value="File password"/>
                         </div>
                         <TextInput autoComplete={"off"} readOnly onFocus={(e) => {
                             //Only way found to prevent autocomplete by Chrome
@@ -54,7 +57,9 @@ function PrivateKeyModal({isOpen, onClose}: { isOpen: boolean, onClose: () => vo
             </Modal.Body>
             <Modal.Footer>
                 <div className="mx-auto">
-                    <Button gradientDuoTone="redToYellow" outline onClick={handleSave}>Valider</Button>
+                    <Button color={"purple"} onClick={handleSave}>
+                        Unlock
+                    </Button>
                 </div>
             </Modal.Footer>
         </Modal>

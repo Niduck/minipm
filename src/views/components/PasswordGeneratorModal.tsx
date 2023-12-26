@@ -39,7 +39,7 @@ function PasswordGeneratorModal({isOpen, onClose}:{isOpen:boolean, onClose: (dat
 
     return (
         <Modal show={isOpen} onClose={_onClose}>
-            <Modal.Header>Générateur de mot de passe</Modal.Header>
+            <Modal.Header>Password generator</Modal.Header>
             <Modal.Body>
                 <form ref={formRef} autoComplete={"off"} className="flex w-full items-stretch gap-12">
                     <div className={"w-full flex justify-evenly flex-col gap-12"}>

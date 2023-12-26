@@ -75,21 +75,21 @@ function IndexView() {
 
     return (
         <>
-            <div className="flex flex-col w-2/4 text-gray-700 mx-auto border border-gray-200 px-1.5  py-1.5 rounded-md">
+            <div className="flex flex-col w-2/4 bg-white text-gray-700 mx-auto border border-gray-200 px-1.5  py-1.5 rounded-md">
                 <section onClick={passwordFileModalOnOpen}
-                         className="flex flex-col border-b border-gray-200 py-6 px-6 cursor-pointer hover:bg-gray-100">
-                    <h4>Créer un fichier de mot de passes</h4>
+                         className="flex flex-col bg-white border-b border-gray-200 py-6 px-6 cursor-pointer hover:bg-gray-100">
+                    <h4>Create a passwords file</h4>
                 </section>
                 <section onClick={openPasswordFilePicker}
-                         className="flex flex-col border-b border-gray-200 py-6 px-6 cursor-pointer hover:bg-gray-100">
-                    <h4>Ouvrir un fichier de mot de passes</h4>
+                         className="flex flex-col bg-white border-b border-gray-200 py-6 px-6 cursor-pointer hover:bg-gray-100">
+                    <h4>Open a <i>.minipm</i> passwords file</h4>
                 </section>
-                <section className="flex flex-col border-b border-gray-200 py-6 px-6 cursor-pointer hover:bg-gray-100">
-                    <h4>Chiffrer un fichier</h4>
-                </section>
-                <section className="flex flex-col py-6 px-6 cursor-pointer hover:bg-gray-100">
-                    <h4>Déchiffrer un fichier</h4>
-                </section>
+                {/*<section className="flex flex-col border-b border-gray-200 py-6 px-6 cursor-pointer hover:bg-gray-100">*/}
+                {/*    <h4>Chiffrer un fichier</h4>*/}
+                {/*</section>*/}
+                {/*<section className="flex flex-col py-6 px-6 cursor-pointer hover:bg-gray-100">*/}
+                {/*    <h4>Déchiffrer un fichier</h4>*/}
+                {/*</section>*/}
             </div>
             <PasswordFileModal isOpen={passwordFileModalOpen} onClose={passwordFileModalOnClose}></PasswordFileModal>
         </>

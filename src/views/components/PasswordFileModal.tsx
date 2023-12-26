@@ -39,19 +39,19 @@ function PasswordFileModal({isOpen, onClose}:{isOpen:boolean, onClose: (data?:st
     return (
         <>
             <Modal show={isOpen} onClose={_onClose}>
-                <Modal.Header>Créer un fichier de mot passe</Modal.Header>
+                <Modal.Header>Create a passwords file</Modal.Header>
                 <Modal.Body>
                     <form id="rr" ref={formRef} autoComplete={"off"} className="flex w-full flex-col gap-4">
                         <div>
                             <div className="mb-2 block">
-                                <Label htmlFor="filename" value="Nom du fichier"/>
+                                <Label htmlFor="filename" value="Filename"/>
                             </div>
                             <TextInput autoComplete={"off"} name="filename" id="filename" type="text"
-                                       placeholder="mon_super_projet" required/>
+                                       placeholder="my_file" required/>
                         </div>
                         <div>
                             <div className="mb-2 block">
-                                <Label htmlFor="secretkey" value="Clé de sécurité"/>
+                                <Label htmlFor="secretkey" value="File password"/>
                             </div>
                             <div className={"flex gap-1.5"}>
 
@@ -62,7 +62,7 @@ function PasswordFileModal({isOpen, onClose}:{isOpen:boolean, onClose: (data?:st
                                                    //Only way found to prevent autocomplete by Chrome
                                                    e.target.removeAttribute('readonly')
                                                }} name="secretkey" id="secretkey"
-                                               helperText={"C'est le mot de passe qui servira à chiffrer les données pour ce fichier. Il vous sera demandé plus tard, ne le perdez pas."}
+                                               helperText={"This is the password that will be used to encrypt the data for this file. You will be asked for it later, do not lose it ans use a strong password."}
                                                type={secretKeyVisible ? "text" : "password"} required/>
                                 </div>
                                 <div className={"flex gap-1.5  items-start"}>
@@ -84,7 +84,7 @@ function PasswordFileModal({isOpen, onClose}:{isOpen:boolean, onClose: (data?:st
                 </Modal.Body>
                 <Modal.Footer>
                     <div className="mx-auto">
-                        <Button onClick={handleSave}>Valider</Button>
+                        <Button color={"purple"} onClick={handleSave}>Continue</Button>
                     </div>
                 </Modal.Footer>
             </Modal>

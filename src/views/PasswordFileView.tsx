@@ -106,11 +106,11 @@ function PasswordFileView() {
                     <Button color={"purple"} size={"sm"} onClick={passwordModalOnOpen}>
                         <div className="flex gap-1.5 items-center">
                             <Icon name={"pluscircle"} size={16}></Icon>
-                            Créer un mot de passe
+                            New password
                         </div>
                     </Button>
                     <Tooltip placement={"bottom"}
-                             content="En téléchargeant le fichier la sauvegarde interne au navigateur sera vidée."
+                             content="By downloading the file, the browser's internal backup will be cleared."
                              style="dark">
                         <Button color={"light"} size={"sm"} outline onClick={savePasswordFile}>
                             <div className="flex gap-1.5 items-center">
@@ -118,11 +118,16 @@ function PasswordFileView() {
                             </div>
                         </Button>
                     </Tooltip>
-                    <Button color={"light"} size={"sm"} outline onClick={closePasswordFile}>
-                        <div className="flex gap-1.5 items-center">
-                            <Icon name={"close"} size={16}></Icon>
-                        </div>
-                    </Button>
+                    <Tooltip placement={"bottom"}
+                             content="Closes the file. Remember to save any changes by using the download button; otherwise, they will be lost."
+                             style="dark">
+                        <Button color={"light"} size={"sm"} outline onClick={closePasswordFile}>
+                            <div className="flex gap-1.5 items-center">
+                                <Icon name={"close"} size={16}></Icon>
+                            </div>
+                        </Button>
+                    </Tooltip>
+
                 </div>
             </div>
             <div className="flex flex-col gap-3  items-stretch p-6  h-full w-full">
