@@ -8,7 +8,7 @@ import PasswordFileView from "../views/PasswordFileView.tsx";
         element: <IndexView/>
     },
      {
-         path: "/fichier/:name",
+         path: "/file",
          element: <PasswordFileView/>
      },
 

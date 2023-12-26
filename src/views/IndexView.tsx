@@ -13,7 +13,7 @@ function IndexView() {
         if (storage) {
             const lock = localStorage.getItem('minipm_lock') ? JSON.parse(storage) : null;
             if (lock) {
-                navigate(`/fichier/${lock.name}`)
+                navigate(`/file`)
             }
         }
     }, [navigate]);
@@ -21,7 +21,7 @@ function IndexView() {
     function passwordFileModalOnClose(data?:string) {
         setPasswordFileModalOpen(false)
         if (data) {
-            navigate(`/fichier/${data}`)
+            navigate(`/file`)
         }
     }
 
@@ -59,7 +59,7 @@ function IndexView() {
                     _passwordsIDB.add(password.id, password)
                 }
 
-                navigate(`/fichier/${name}`)
+                navigate(`/file`)
             } else {
                 console.log("L'API File System Access n'est pas disponible dans ce navigateur.");
             }
