@@ -1,23 +1,26 @@
 import {Button, Label, Modal, TextInput} from "flowbite-react";
-import {SyntheticEvent, useContext, useRef} from "react";
+import {SyntheticEvent, useContext, useRef, useState} from "react";
 import {PrivateKeyContext} from "../../context/PrivateKeyContext.tsx";
 import Encryption from "../../services/Encryption.ts";
 import Base64Converter from "../../services/Base64Converter.tsx";
 import {PrivateKey} from "../../models/PrivateKey.ts";
+import Icon from "../../components/Icon.tsx";
 
 function PrivateKeyModal({isOpen, onClose}: { isOpen: boolean, onClose: () => void }) {
 
     const {setPrivateKey} = useContext(PrivateKeyContext);
     const formRef = useRef(null)
+    const [passwordVisible, setPasswordVisible] = useState(false)
 
-    async function handleSave() {
+    async function handleSave(event:SyntheticEvent) {
+        event.preventDefault()
         if (!formRef.current) {
             console.error("formRef not found")
             return false;
         }
         //Get data from the formRef
         const formData = new FormData(formRef.current);
-        if(!formData.get('privateKey')){
+        if (!formData.get('privateKey')) {
             return;
         }
         const privateKey = formData.get('privateKey') as string
@@ -43,22 +46,30 @@ function PrivateKeyModal({isOpen, onClose}: { isOpen: boolean, onClose: () => vo
         <Modal show={isOpen} onClose={_onClose}>
             <Modal.Header>Unlock your file</Modal.Header>
             <Modal.Body>
-                <form ref={formRef} autoComplete={"off"} className="flex w-full flex-col gap-4">
+                <form name="privatekey_form" id="privatekey_form" ref={formRef} autoComplete={"off"}
+                      onSubmit={handleSave} className="flex w-full flex-col gap-4">
                     <div>
                         <div className="mb-2 block">
                             <Label htmlFor="password" value="File password"/>
                         </div>
-                        <TextInput autoComplete={"off"} readOnly onFocus={(e) => {
-                            //Only way found to prevent autocomplete by Chrome
-                            e.target.removeAttribute('readonly')
-                        }} name="privateKey" id="privateKey" type="password" required/>
+                        <div className="flex gap-1.5">
+                            <TextInput className={"w-full"} autoComplete={"off"} readOnly onFocus={(e) => {
+                                //Only way found to prevent autocomplete by Chrome
+                                e.target.removeAttribute('readonly')
+                            }} name="privateKey" id="privateKey" type={passwordVisible ? "text" : "password"} required/>
+                            <Button size={"xs"} color={"light"} onClick={() => {
+                                setPasswordVisible(prevState => !prevState)
+                            }}>
+                                <Icon name={passwordVisible ? "eyeoff" : "eye"} size={19}></Icon>
+                            </Button>
+                        </div>
                     </div>
 
                 </form>
             </Modal.Body>
             <Modal.Footer>
                 <div className="mx-auto">
-                    <Button color={"purple"} onClick={handleSave}>
+                    <Button color={"purple"} type={"submit"} form={"privatekey_form"}>
                         Unlock
                     </Button>
                 </div>
