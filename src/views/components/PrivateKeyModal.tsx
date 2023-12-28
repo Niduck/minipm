@@ -5,6 +5,8 @@ import Encryption from "../../services/Encryption.ts";
 import Base64Converter from "../../services/Base64Converter.tsx";
 import {PrivateKey} from "../../models/PrivateKey.ts";
 import Icon from "../../components/Icon.tsx";
+import PasswordsIDB from "../../db/PasswordsIDB.ts";
+import {useNavigate} from "react-router-dom";
 
 function PrivateKeyModal({isOpen, onClose}: { isOpen: boolean, onClose: (unlocked:boolean) => void }) {
 
@@ -13,6 +15,12 @@ function PrivateKeyModal({isOpen, onClose}: { isOpen: boolean, onClose: (unlocke
     const [passwordVisible, setPasswordVisible] = useState(false)
     const [error, setError] = useState<string|null>(null)
 
+    const navigate = useNavigate();
+    async function handleClear(){
+        await (await PasswordsIDB).clear()
+        localStorage.removeItem('minipm_lock')
+        navigate('/')
+    }
     async function handleSave(event: SyntheticEvent) {
         event.preventDefault()
         if (!formRef.current) {
@@ -81,12 +89,17 @@ function PrivateKeyModal({isOpen, onClose}: { isOpen: boolean, onClose: (unlocke
                 </form>
             </Modal.Body>
             <Modal.Footer>
-                <div className="flex flex-col gap-1.5 mx-auto">
-                    <div className="text-sm text-red-500">
-                        {error}
+                <div className="flex justify-center items-center w-full ">
+                    <div className="flex flex-col gap-1.5 mx-auto">
+                        <div className="text-sm text-red-500">
+                            {error}
+                        </div>
+                        <Button color={"purple"} type={"submit"} form={"privatekey_form"}>
+                            Unlock
+                        </Button>
                     </div>
-                    <Button color={"purple"} type={"submit"} form={"privatekey_form"}>
-                        Unlock
+                    <Button color={"light"} size={"xs"} type={"button"} onClick={handleClear}>
+                        Clear
                     </Button>
                 </div>
             </Modal.Footer>

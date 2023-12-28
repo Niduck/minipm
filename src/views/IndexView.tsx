@@ -1,7 +1,7 @@
 import PasswordFileModal from "../views/components/PasswordFileModal.tsx";
 import { useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import passwordsIDB from "../db/PasswordsIDB.ts";
+import MinipmFileReader from "../services/MinipmFileReader.tsx";
 
 function IndexView() {
 
@@ -42,17 +42,11 @@ function IndexView() {
                 const file = await fileHandle.getFile();
 
                 // Lire le contenu du fichier
-                const text = await file.text();
-                console.log(text); // Affiche le contenu du fichier
-
-                const [metadataAsJSON, passwordsAsJSON] = text.split("__");
-                localStorage.setItem('minipm_lock', metadataAsJSON)
-                const _passwordsIDB = await passwordsIDB
-                const passwords = JSON.parse(passwordsAsJSON);
-                for (const password of passwords) {
-                    _passwordsIDB.add(password.id, password)
+                const content = await file.text();
+                const fileRead = await MinipmFileReader(content)
+                if(fileRead){
+                    navigate(`/file`)
                 }
-                navigate(`/file`)
             } else {
                 console.log("L'API File System Access n'est pas disponible dans ce navigateur.");
             }

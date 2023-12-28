@@ -9,6 +9,7 @@ import {PrivateKeyContext} from "../context/PrivateKeyContext.tsx";
 import PrivateKeyModal from "./components/PrivateKeyModal.tsx";
 import {useEncryption} from "../hooks/useEncryption.tsx";
 import Base64Converter from "../services/Base64Converter.tsx";
+import MinipmFileWriter from "../services/MinipmFileWriter.tsx";
 
 interface MinipmPasswordRequestDetail {
     publicKey: string;
@@ -118,7 +119,7 @@ function PasswordFileView() {
                     });
 
                     const writable = await fileHandle.createWritable();
-                    const data = JSON.stringify(lock) + '__' + JSON.stringify(passwords)
+                    const data = await MinipmFileWriter(1)
                     await writable.write(data);
                     await writable.close();
                     await closePasswordFile()
