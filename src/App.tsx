@@ -1,7 +1,5 @@
 import React from "react";
 import {PrivateKeyProvider} from "./context/PrivateKeyContext.tsx";
-import {Badge} from "flowbite-react";
-import Icon from "./components/Icon.tsx";
 
 function App({children}:{children: React.ReactNode}) {
     return (

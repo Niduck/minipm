@@ -10,6 +10,15 @@ import PrivateKeyModal from "./components/PrivateKeyModal.tsx";
 import {useEncryption} from "../hooks/useEncryption.tsx";
 import Base64Converter from "../services/Base64Converter.tsx";
 
+interface MinipmPasswordRequestDetail {
+    publicKey: string;
+    location: Location; // Supposons que Location est un type défini ailleurs
+}
+declare global {
+    interface WindowEventMap {
+        "minipmPasswordRequest": CustomEvent<MinipmPasswordRequestDetail>;
+    }
+}
 function PasswordFileView() {
     const {privateKey} = useContext(PrivateKeyContext);
     const navigate = useNavigate();
@@ -25,8 +34,7 @@ function PasswordFileView() {
         }
     }, [privateKey]);
 
-    // @ts-ignore
-    window.addEventListener('minipmPasswordRequest', async function (e:CustomEvent<{ detail: {publicKey:string, location: Location} }>) {
+    window.addEventListener('minipmPasswordRequest', async function (e:CustomEvent<MinipmPasswordRequestDetail>) {
         const data = e.detail;
         const publicKeyArrayBuffer = Uint8Array.from(atob(data.publicKey), c => c.charCodeAt(0)).buffer;
 
@@ -41,7 +49,7 @@ function PasswordFileView() {
             ["encrypt"]
         )
         const password = passwords.find(p => {
-            return data.location.hostname.includes(p.domain)
+            return p.domain && data.location.hostname.includes(p.domain)
         })
         if (password && privateKey) {
             const decryptedPassword = await decrypt(privateKey.key, password.secret as string);

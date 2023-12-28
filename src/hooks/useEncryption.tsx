@@ -2,7 +2,6 @@ import {useContext} from "react";
 import {PrivateKeyContext} from "../context/PrivateKeyContext.tsx";
 import Encryption from "../services/Encryption.ts";
 import Base64Converter from "../services/Base64Converter.tsx";
-import PasswordsIDB from "../db/PasswordsIDB.ts";
 
 export function useEncryption(){
     const {privateKey} = useContext(PrivateKeyContext);
