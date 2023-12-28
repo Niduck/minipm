@@ -50,6 +50,7 @@ function PasswordModal({isOpen, onClose, defaultValue}: { isOpen: boolean, onClo
         const password: Password = {
             id: id,
             name: formData.get('name') as string,
+            domain: formData.get('domain') as string,
             secret: {
                 username: formData.get('secret.username') as string,
                 password: formData.get('secret.password') as string,
@@ -108,6 +109,16 @@ function PasswordModal({isOpen, onClose, defaultValue}: { isOpen: boolean, onClo
                                     <TextInput autoComplete={"off"} name="name" defaultValue={value?.name} id="name"
                                                type="text"
                                                placeholder="my_secret_password" required/>
+                                </div>
+                                <div>
+                                    <div className="mb-2 block">
+                                        <Label htmlFor="domain" value="Domain*"/>
+                                    </div>
+                                    <TextInput autoComplete={"off"} name="domain"
+                                               defaultValue={value?.domain}
+                                               id="domain" type="text"
+                                               required/>
+                                    <div className={"text-xs mt-1.5 text-gray-500"}>*The domain is the purple part of the url : https://<span className="text-purple-600">website.net</span>/page</div>
                                 </div>
                                 <div>
                                     <div className="mb-2 block">

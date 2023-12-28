@@ -5,6 +5,8 @@ import Encryption from "../../services/Encryption.ts";
 import {type PrivateKey} from "../../models/PrivateKey.ts";
 import Icon from "../../components/Icon.tsx";
 import PasswordGeneratorModal from "./PasswordGeneratorModal.tsx";
+import uniqid from "uniqid";
+import Base64Converter from "../../services/Base64Converter.tsx";
 
 function PasswordFileModal({isOpen, onClose}:{isOpen:boolean, onClose: (data?:string)=>void}) {
 
@@ -17,18 +19,30 @@ function PasswordFileModal({isOpen, onClose}:{isOpen:boolean, onClose: (data?:st
 
     async function handleSave() {
         if (!formRef.current) {
+            console.log("no form ref")
             return false;
         }
+        console.log(setPrivateKey, !!setPrivateKey)
         if (setPrivateKey) {
             const formData = new FormData(formRef.current);
-            if(!formData.get('privateKey') || !formData.get('filename')){
+            console.log(!formData.get('secretkey') || !formData.get('filename'))
+            if(!formData.get('secretkey') || !formData.get('filename')){
                 return;
             }
             const encryption = Encryption();
             const cryptoKey = await encryption.key.deriveKey(formData.get('secretkey') as string);
             setPrivateKey(cryptoKey as PrivateKey)
+            const checkKey = uniqid("minipm_");
+            const encodedSecret = (new TextEncoder).encode(checkKey)
+            const iv = window.crypto.getRandomValues(new Uint8Array(16));
+            const encrypted = await encryption.symmetric.encrypt(cryptoKey.key, encodedSecret, iv);
+            const digest = await encryption.digest(encrypted);
+            const digestBase64 = Base64Converter.toBase64(digest)
             localStorage.setItem("minipm_lock", JSON.stringify({
-                name: formData.get('filename'), salt: cryptoKey.salt
+                name: formData.get('filename'), salt: cryptoKey.salt, checkKey: {
+                    original: Base64Converter.toBase64(iv)+"__"+checkKey,
+                    digest: digestBase64
+                }
             }))
             _onClose(formData.get('filename') as string)
         }

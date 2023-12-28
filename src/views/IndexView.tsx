@@ -41,24 +41,17 @@ function IndexView() {
                 // Obtenir un objet File
                 const file = await fileHandle.getFile();
 
-                const [name] = file.name.split(".");
                 // Lire le contenu du fichier
                 const text = await file.text();
                 console.log(text); // Affiche le contenu du fichier
 
-                const [salt, passwordsAdJSON] = text.split("__");
-                console.log(salt, passwordsAdJSON)
-                localStorage.setItem('minipm_lock', JSON.stringify({
-                    name: name,
-                    salt: salt
-                }))
+                const [metadataAsJSON, passwordsAsJSON] = text.split("__");
+                localStorage.setItem('minipm_lock', metadataAsJSON)
                 const _passwordsIDB = await passwordsIDB
-                const passwords = JSON.parse(passwordsAdJSON);
+                const passwords = JSON.parse(passwordsAsJSON);
                 for (const password of passwords) {
-                    console.log(password)
                     _passwordsIDB.add(password.id, password)
                 }
-
                 navigate(`/file`)
             } else {
                 console.log("L'API File System Access n'est pas disponible dans ce navigateur.");
@@ -66,7 +59,6 @@ function IndexView() {
         } catch (err) {
             console.error(err);
         }
-
     }
 
     function passwordFileModalOnOpen() {

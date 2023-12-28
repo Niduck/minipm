@@ -65,8 +65,8 @@ export default function Encryption() {
             },
         },
         symmetric: {
-            encrypt: async function (cryptoKey: CryptoKey, data: BufferSource) {
-                const _iv = window.crypto.getRandomValues(new Uint8Array(16));
+            encrypt: async function (cryptoKey: CryptoKey, data: BufferSource, iv?: Uint8Array) {
+                const _iv = iv ? iv : window.crypto.getRandomValues(new Uint8Array(16));
                 const encrypted = await window.crypto.subtle.encrypt(
                     {
                         name: ALG,

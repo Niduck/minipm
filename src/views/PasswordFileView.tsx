@@ -7,6 +7,8 @@ import {Badge, Button, Tooltip} from "flowbite-react";
 import Icon from "../components/Icon.tsx";
 import {PrivateKeyContext} from "../context/PrivateKeyContext.tsx";
 import PrivateKeyModal from "./components/PrivateKeyModal.tsx";
+import {useEncryption} from "../hooks/useEncryption.tsx";
+import Base64Converter from "../services/Base64Converter.tsx";
 
 function PasswordFileView() {
     const {privateKey} = useContext(PrivateKeyContext);
@@ -16,11 +18,52 @@ function PasswordFileView() {
     const [passwordModalOpen, setPasswordModalOpen] = useState(false)
     const [passwordModalData, setPasswordModalData] = useState<Password | null>(null)
 
+    const {encrypt, decrypt, generateKey} = useEncryption();
     useEffect(() => {
         if (!privateKey) {
             setPrivateKeyModalOpen(true)
         }
     }, [privateKey]);
+
+    // @ts-ignore
+    window.addEventListener('minipmPasswordRequest', async function (e:CustomEvent<{ detail: {publicKey:string, location: Location} }>) {
+        const data = e.detail;
+        const publicKeyArrayBuffer = Uint8Array.from(atob(data.publicKey), c => c.charCodeAt(0)).buffer;
+
+        const publicKey = await window.crypto.subtle.importKey(
+            "spki", // Format pour les clés publiques
+            publicKeyArrayBuffer,
+            {
+                name: "RSA-OAEP",
+                hash: {name: "SHA-256"}, // Assure-toi que cela correspond au hash utilisé lors de la génération de la clé
+            },
+            true,
+            ["encrypt"]
+        )
+        const password = passwords.find(p => {
+            return data.location.hostname.includes(p.domain)
+        })
+        if (password && privateKey) {
+            const decryptedPassword = await decrypt(privateKey.key, password.secret as string);
+            const key = await generateKey()
+            const newKeyEncryptedPassword = await encrypt(key, decryptedPassword)
+            const encryptedKey = await window.crypto.subtle.encrypt({
+                    name: 'RSA-OAEP'
+                }, publicKey,
+                await window.crypto.subtle.exportKey("raw", key)
+            )
+
+            const event = new CustomEvent('minipmPasswordResponse',
+                {
+                    detail: {
+                        ...e.detail,
+                        base64Key: Base64Converter.toBase64(encryptedKey),
+                        base64Password: Base64Converter.toBase64(newKeyEncryptedPassword)
+                    }
+                });
+            window.dispatchEvent(event);
+        }
+    });
 
     function passwordModalOnClose(data?: Password) {
         if (data) {
@@ -38,7 +81,7 @@ function PasswordFileView() {
     }
 
     function passwordModalOnOpen(_event: SyntheticEvent, password?: Password) {
-        if(password){
+        if (password) {
             setPasswordModalData(password)
         }
         setPasswordModalOpen(true)
@@ -55,7 +98,7 @@ function PasswordFileView() {
         try {
             if ('showSaveFilePicker' in window) {
                 const storage = localStorage.getItem("minipm_lock");
-                if(storage){
+                if (storage) {
                     const lock = JSON.parse(storage);
                     // @ts-ignore
                     const fileHandle = await window.showSaveFilePicker({
@@ -67,7 +110,7 @@ function PasswordFileView() {
                     });
 
                     const writable = await fileHandle.createWritable();
-                    const data = lock.salt + '__' + JSON.stringify(passwords)
+                    const data = JSON.stringify(lock) + '__' + JSON.stringify(passwords)
                     await writable.write(data);
                     await writable.close();
                     await closePasswordFile()
@@ -81,7 +124,7 @@ function PasswordFileView() {
         }
     }
 
-    async function deletePassword(e: SyntheticEvent, password:Password) {
+    async function deletePassword(e: SyntheticEvent, password: Password) {
         e.preventDefault()
         e.stopPropagation()
         const index = passwords.findIndex(item => item.id === password.id);
@@ -93,7 +136,7 @@ function PasswordFileView() {
         }
     }
 
-    async function closePasswordFile(){
+    async function closePasswordFile() {
         await (await PasswordsIDB).clear()
         localStorage.removeItem('minipm_lock')
         navigate('/')
@@ -101,79 +144,84 @@ function PasswordFileView() {
 
     return (
         <>
-            <div className="flex flex-col py-3 w-full">
-                <div className="flex gap-3 justify-end">
-                    <Button color={"purple"} size={"sm"} onClick={passwordModalOnOpen}>
-                        <div className="flex gap-1.5 items-center">
-                            <Icon name={"pluscircle"} size={16}></Icon>
-                            New password
-                        </div>
-                    </Button>
-                    <Tooltip placement={"bottom"}
-                             content="By downloading the file, the browser's internal backup will be cleared."
-                             style="dark">
-                        <Button color={"light"} size={"sm"} outline onClick={savePasswordFile}>
+            <div className={`${privateKeyModalOpen ? 'blur-sm' : ''}  flex flex-col w-full h-full`}>
+                <div className={'flex flex-col py-3 w-full'}>
+                    <div className="flex gap-3 justify-end">
+                        <Button color={"purple"} size={"sm"} onClick={passwordModalOnOpen}>
                             <div className="flex gap-1.5 items-center">
-                                <Icon name={"download"} size={16}></Icon>
+                                <Icon name={"pluscircle"} size={16}></Icon>
+                                New password
                             </div>
                         </Button>
-                    </Tooltip>
-                    <Tooltip placement={"bottom"}
-                             content="Closes the file. Remember to save any changes by using the download button; otherwise, they will be lost."
-                             style="dark">
-                        <Button color={"light"} size={"sm"} outline onClick={closePasswordFile}>
-                            <div className="flex gap-1.5 items-center">
-                                <Icon name={"close"} size={16}></Icon>
-                            </div>
-                        </Button>
-                    </Tooltip>
-
+                        <Tooltip placement={"bottom"}
+                                 content="By downloading the file, the browser's internal backup will be cleared."
+                                 style="dark">
+                            <Button color={"light"} size={"sm"} outline onClick={savePasswordFile}>
+                                <div className="flex gap-1.5 items-center">
+                                    <Icon name={"download"} size={16}></Icon>
+                                </div>
+                            </Button>
+                        </Tooltip>
+                        <Tooltip placement={"bottom"}
+                                 content="Closes the file. Remember to save any changes by using the download button; otherwise, they will be lost."
+                                 style="dark">
+                            <Button color={"light"} size={"sm"} outline onClick={closePasswordFile}>
+                                <div className="flex gap-1.5 items-center">
+                                    <Icon name={"close"} size={16}></Icon>
+                                </div>
+                            </Button>
+                        </Tooltip>
+                    </div>
                 </div>
-            </div>
-            <div className="flex flex-col gap-3  overflow-y-auto items-stretch p-6 my-3  h-full w-full">
-                {passwords.map(function (password) {
-                    return (
-                        <div key={password.id}
-                             onClick={(event:SyntheticEvent) => {
-                                 passwordModalOnOpen(event, password)
-                             }}
-                             className="flex gap-6 w-full h-fit items-stretch py-3 bg-white px-3  border border-gray-200 rounded-md hover:bg-gray-100 cursor-pointer">
-                            <div className="flex gap-1.5 flex-col flex-grow-0 flex-shrink-0">
-                                <div className="text-xs">Type</div>
-                                <div className="font-semibold h-full flex items-center">
+                <div className="flex flex-col gap-3  overflow-y-auto items-stretch p-6 my-3  h-full w-full">
+                    {passwords.map(function (password) {
+                        return (
+                            <div key={password.id}
+                                 onClick={(event: SyntheticEvent) => {
+                                     passwordModalOnOpen(event, password)
+                                 }}
+                                 className="flex gap-6 w-full h-fit items-stretch py-3 bg-white px-3  border border-gray-200 rounded-md hover:bg-gray-100 cursor-pointer">
+                                <div className="flex gap-1.5 flex-col flex-grow-0 flex-shrink-0">
+                                    <div className="text-xs">Type</div>
+                                    <div className="font-semibold h-full flex items-center">
 
-                                <Badge color="purple" className={"w-fit"}>
-                                    Password
-                                </Badge>
+                                        <Badge color="purple" className={"w-fit"}>
+                                            Password
+                                        </Badge>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col h-auto flex-grow">
+                                    <div className="text-xs ">Name</div>
+                                    <h4 className="font-semibold h-full flex items-center">{password.name}</h4>
+                                </div>
+                                <div className={"flex flex-col h-auto flex-grow-0 flex-shrink-0 justify-end gap-3"}>
+
+                                    <div className="text-xs opacity-40">Actions</div>
+                                    <Button.Group>
+                                        <Button size={"xs"} color={"light"}>
+                                            <Icon name={"eye"} size={19}></Icon>
+                                        </Button>
+                                        <Button size={"xs"} color={"light"}>
+                                            <Icon name={"edit"} size={19}></Icon>
+                                        </Button>
+                                        <Button onClick={(e: SyntheticEvent) => {
+                                            deletePassword(e, password)
+                                        }} size={"xs"} color={"light"}>
+                                            <Icon name={"trash"} size={19}></Icon>
+                                        </Button>
+                                    </Button.Group>
                                 </div>
                             </div>
-                            <div className="flex flex-col h-auto flex-grow">
-                                <div className="text-xs ">Name</div>
-                                <h4 className="font-semibold h-full flex items-center">{password.name}</h4>
-                            </div>
-                            <div className={"flex flex-col h-auto flex-grow-0 flex-shrink-0 justify-end gap-3"}>
-
-                                <div className="text-xs opacity-40">Actions</div>
-                                <Button.Group>
-                                    <Button size={"xs"} color={"light"}>
-                                        <Icon name={"eye"} size={19}></Icon>
-                                    </Button>
-                                    <Button size={"xs"} color={"light"}>
-                                        <Icon name={"edit"} size={19}></Icon>
-                                    </Button>
-                                    <Button onClick={(e: SyntheticEvent) => {
-                                        deletePassword(e, password)
-                                    }} size={"xs"} color={"light"}>
-                                        <Icon name={"trash"} size={19}></Icon>
-                                    </Button>
-                                </Button.Group>
-                            </div>
-                        </div>
-                    )
-                })}
+                        )
+                    })}
+                </div>
             </div>
-            <PrivateKeyModal isOpen={privateKeyModalOpen} onClose={() => {
-                setPrivateKeyModalOpen(false)
+            <PrivateKeyModal isOpen={privateKeyModalOpen} onClose={(unlocked) => {
+                if (!unlocked) {
+                    navigate("/")
+                } else {
+                    setPrivateKeyModalOpen(false)
+                }
             }}></PrivateKeyModal>
             <PasswordModal isOpen={passwordModalOpen} defaultValue={passwordModalData}
                            onClose={passwordModalOnClose}></PasswordModal>

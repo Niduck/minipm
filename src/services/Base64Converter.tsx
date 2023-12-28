@@ -1,6 +1,6 @@
 /** This code is from https://www.isummation.com/blog/convert-arraybuffer-to-base64-string-and-vice-versa/ */
 export default {
-    toBase64: function (buffer:Uint8Array) {
+    toBase64: function (buffer:Uint8Array | ArrayBuffer) {
         let binary = '';
         const bytes = new Uint8Array(buffer);
         const len = bytes.byteLength;
