@@ -10,7 +10,6 @@ import PrivateKeyModal from "./components/PrivateKeyModal.tsx";
 import {useEncryption} from "../hooks/useEncryption.tsx";
 import Base64Converter from "../services/Base64Converter.tsx";
 import MinipmFileWriter from "../services/MinipmFileWriter.tsx";
-import MinipmFileReader from "../services/MinipmFileReader.tsx";
 import uniqid from "uniqid";
 import Encryption from "../services/Encryption.ts";
 import {SecretFile} from "../models/SecretFile.ts";
@@ -338,7 +337,7 @@ function PasswordFileView() {
                                     <div className="text-xs opacity-40">Actions</div>
                                     <Button.Group>
 
-                                        <Button onClick={(e: SyntheticEvent) => {
+                                        <Button onClick={() => {
                                             handleFileDownload(file)
                                         }} size={"xs"} color={"light"}>
                                             <Icon name={"download"} size={19}></Icon>
