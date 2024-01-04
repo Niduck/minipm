@@ -50,6 +50,7 @@ function PasswordModal({isOpen, onClose, defaultValue}: { isOpen: boolean, onClo
         const password: Password = {
             id: id,
             name: formData.get('name') as string,
+            type: 'password',
             domain: formData.get('domain') as string,
             secret: {
                 username: formData.get('secret.username') as string,

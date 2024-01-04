@@ -10,19 +10,27 @@ import PrivateKeyModal from "./components/PrivateKeyModal.tsx";
 import {useEncryption} from "../hooks/useEncryption.tsx";
 import Base64Converter from "../services/Base64Converter.tsx";
 import MinipmFileWriter from "../services/MinipmFileWriter.tsx";
+import MinipmFileReader from "../services/MinipmFileReader.tsx";
+import uniqid from "uniqid";
+import Encryption from "../services/Encryption.ts";
+import {SecretFile} from "../models/SecretFile.ts";
+import base64Converter from "../services/Base64Converter.tsx";
 
 interface MinipmPasswordRequestDetail {
     publicKey: string;
     location: Location; // Supposons que Location est un type défini ailleurs
 }
+
 declare global {
     interface WindowEventMap {
         "minipmPasswordRequest": CustomEvent<MinipmPasswordRequestDetail>;
     }
 }
+
 function PasswordFileView() {
     const {privateKey} = useContext(PrivateKeyContext);
     const navigate = useNavigate();
+    const [files, setFiles] = useState<SecretFile[]>([])
     const [passwords, setPasswords] = useState<Password[]>([])
     const [privateKeyModalOpen, setPrivateKeyModalOpen] = useState(false)
     const [passwordModalOpen, setPasswordModalOpen] = useState(false)
@@ -35,7 +43,7 @@ function PasswordFileView() {
         }
     }, [privateKey]);
 
-    window.addEventListener('minipmPasswordRequest', async function (e:CustomEvent<MinipmPasswordRequestDetail>) {
+    window.addEventListener('minipmPasswordRequest', async function (e: CustomEvent<MinipmPasswordRequestDetail>) {
         const data = e.detail;
         const publicKeyArrayBuffer = Uint8Array.from(atob(data.publicKey), c => c.charCodeAt(0)).buffer;
 
@@ -99,7 +107,9 @@ function PasswordFileView() {
     useEffect(() => {
         (async function () {
             const passwordDB = (await PasswordsIDB);
-            setPasswords(await passwordDB.all())
+            const data = await passwordDB.all()
+            setPasswords(data.filter(item => item.type === 'password'))
+            setFiles(data.filter(item => item.type === 'file'))
         })()
     }, []);
 
@@ -133,15 +143,89 @@ function PasswordFileView() {
         }
     }
 
-    async function deletePassword(e: SyntheticEvent, password: Password) {
+    async function handleFileAdd() {
+        try {
+            if ('showOpenFilePicker' in window) {
+                // @ts-ignore
+                const [fileHandle] = await window.showOpenFilePicker({});
+                const file = await fileHandle.getFile();
+                const fileReader = new FileReader();
+                fileReader.onload = async function (e) {
+                    const result = e.target?.result;
+                    if (result && result instanceof ArrayBuffer) {
+                        const id = uniqid.time();
+                        const secretFile: SecretFile = {
+                            id: id,
+                            name: file.name,
+                            type: "file",
+                            secret: {
+                                content: Base64Converter.toBase64(result)
+                            }
+                        };
+                        //-- Encrypt the secret part of the password
+                        if (privateKey) {
+                            const encryption = Encryption();
+                            const encodedSecret = (new TextEncoder).encode(JSON.stringify(secretFile.secret))
+                            const encrypted = await encryption.symmetric.encrypt(privateKey.key, encodedSecret);
+                            secretFile.secret = Base64Converter.toBase64(encrypted)
+                            //-- Save data in indexedDB
+                            const idb = await PasswordsIDB
+                            idb.add(id, secretFile)
+                            setFiles(prevState => [...prevState, secretFile])
+                        }
+                    }
+                }
+                fileReader.readAsArrayBuffer(file)
+            } else {
+                console.log("L'API File System Access n'est pas disponible dans ce navigateur.");
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function handleFileDownload(file: SecretFile) {
+        try {
+            if ('showSaveFilePicker' in window) {
+                // @ts-ignore
+                const fileHandle = await window.showSaveFilePicker({
+                    suggestedName: file.name
+                });
+
+                if (privateKey) {
+                    const decryptedPassword = await decrypt(privateKey.key, file.secret as string);
+                    const content = base64Converter.toUint8Array(decryptedPassword.content);
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(content.buffer);
+                    await writable.close();
+                }
+
+            } else {
+                console.log("L'API File System Access n'est pas disponible dans ce navigateur.");
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function deletePassword(e: SyntheticEvent, secret: Password | SecretFile) {
         e.preventDefault()
         e.stopPropagation()
-        const index = passwords.findIndex(item => item.id === password.id);
+        const collection = secret.type === 'password' ? passwords : files;
+        const index = collection.findIndex(item => item.id === secret.id);
         if (index > -1) {
             const passwordDB = (await PasswordsIDB);
-            passwordDB.delete(password.id);
-            passwords.splice(index, 1)
-            setPasswords([...passwords])
+            passwordDB.delete(secret.id);
+            collection.splice(index, 1)
+            switch (secret.type) {
+                case 'password':
+                    setPasswords([...collection as Password[]])
+                    break;
+                case 'file':
+                    setFiles([...collection as SecretFile[]])
+                    break;
+
+            }
         }
     }
 
@@ -160,6 +244,12 @@ function PasswordFileView() {
                             <div className="flex gap-1.5 items-center">
                                 <Icon name={"pluscircle"} size={16}></Icon>
                                 New password
+                            </div>
+                        </Button>
+                        <Button color={"blue"} size={"sm"} onClick={handleFileAdd}>
+                            <div className="flex gap-1.5 items-center">
+                                <Icon name={"pluscircle"} size={16}></Icon>
+                                New file
                             </div>
                         </Button>
                         <Tooltip placement={"bottom"}
@@ -183,6 +273,8 @@ function PasswordFileView() {
                     </div>
                 </div>
                 <div className="flex flex-col gap-3  overflow-y-auto items-stretch p-6 my-3  h-full w-full">
+                    <h2 className={"w-full opacity-60 border-b pb-3"}>Passwords</h2>
+
                     {passwords.map(function (password) {
                         return (
                             <div key={password.id}
@@ -215,6 +307,44 @@ function PasswordFileView() {
                                         </Button>
                                         <Button onClick={(e: SyntheticEvent) => {
                                             deletePassword(e, password)
+                                        }} size={"xs"} color={"light"}>
+                                            <Icon name={"trash"} size={19}></Icon>
+                                        </Button>
+                                    </Button.Group>
+                                </div>
+                            </div>
+                        )
+                    })}
+                    <h2 className={"w-full opacity-60 border-b py-3"}>Files</h2>
+                    {files.map(function (file) {
+                        return (
+                            <div key={file.id}
+                                 className="flex gap-6 w-full h-fit items-stretch py-3 bg-white px-3  border border-gray-200 rounded-md hover:bg-gray-100 cursor-pointer">
+                                <div className="flex gap-1.5 flex-col flex-grow-0 flex-shrink-0">
+                                    <div className="text-xs">Type</div>
+                                    <div className="font-semibold h-full flex items-center">
+
+                                        <Badge color="blue" className={"w-fit"}>
+                                            File
+                                        </Badge>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col h-auto flex-grow">
+                                    <div className="text-xs ">Name</div>
+                                    <h4 className="font-semibold h-full flex items-center">{file.name}</h4>
+                                </div>
+                                <div className={"flex flex-col h-auto flex-grow-0 flex-shrink-0 justify-end gap-3"}>
+
+                                    <div className="text-xs opacity-40">Actions</div>
+                                    <Button.Group>
+
+                                        <Button onClick={(e: SyntheticEvent) => {
+                                            handleFileDownload(file)
+                                        }} size={"xs"} color={"light"}>
+                                            <Icon name={"download"} size={19}></Icon>
+                                        </Button>
+                                        <Button onClick={(e: SyntheticEvent) => {
+                                            deletePassword(e, file)
                                         }} size={"xs"} color={"light"}>
                                             <Icon name={"trash"} size={19}></Icon>
                                         </Button>
